@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EFA.Domain.Identity;
+using EFA.Domain.Matches;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EFA.Infrastructure.Persistence
@@ -63,6 +65,75 @@ namespace EFA.Infrastructure.Persistence
                     admin,
                     "Admin");
             }
+
+            var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
+            await SeedMatchReferenceDataAsync(dbContext);
+        }
+
+        private static async Task SeedMatchReferenceDataAsync(ApplicationDbContext dbContext)
+        {
+            string[] tournaments =
+            [
+                "الدوري المصري الممتاز",
+                "الدوري الممتاز",
+                "كأس مصر"
+            ];
+
+            foreach (var name in tournaments)
+            {
+                if (!await dbContext.Tournaments.AnyAsync(x => x.Name == name))
+                {
+                    dbContext.Tournaments.Add(new Tournament
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = name,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            string[] stadiums =
+            [
+                "استاد القاهرة الدولي",
+                "استاد برج العرب"
+            ];
+
+            foreach (var name in stadiums)
+            {
+                if (!await dbContext.Stadiums.AnyAsync(x => x.Name == name))
+                {
+                    dbContext.Stadiums.Add(new Stadium
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = name,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            string[] teams =
+            [
+                "الأهلي",
+                "الزمالك",
+                "بيراميدز",
+                "الإسماعيلي",
+                "المصري"
+            ];
+
+            foreach (var name in teams)
+            {
+                if (!await dbContext.Teams.AnyAsync(x => x.Name == name))
+                {
+                    dbContext.Teams.Add(new Team
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = name,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            await dbContext.SaveChangesAsync();
         }
     }
 }

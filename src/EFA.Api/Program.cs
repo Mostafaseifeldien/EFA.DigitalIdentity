@@ -1,6 +1,9 @@
 using System.Text;
 using EFA.Application.Members.CreateMember;
 using EFA.Application.Members.GetMembers;
+using EFA.Application.Matches.CreateMatch;
+using EFA.Application.Matches.GetMatchLookups;
+using EFA.Application.Matches.GetMatches;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
 using EFA.Infrastructure.Persistence;
@@ -97,6 +100,10 @@ builder.Services
 builder.Services.AddScoped<CreateMemberHandler>();
 builder.Services.AddScoped<GetMembersHandler>();
 builder.Services.AddScoped<IValidator<CreateMemberRequest>, CreateMemberRequestValidator>();
+builder.Services.AddScoped<GetMatchesHandler>();
+builder.Services.AddScoped<CreateMatchHandler>();
+builder.Services.AddScoped<GetMatchLookupsHandler>();
+builder.Services.AddScoped<IValidator<CreateMatchRequest>, CreateMatchRequestValidator>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
