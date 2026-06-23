@@ -1,5 +1,6 @@
 using System.Text;
 using EFA.Application.Members.CreateMember;
+using EFA.Application.Members.GetMembers;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
 using EFA.Infrastructure.Persistence;
@@ -94,6 +95,7 @@ builder.Services
         };
     });
 builder.Services.AddScoped<CreateMemberHandler>();
+builder.Services.AddScoped<GetMembersHandler>();
 builder.Services.AddScoped<IValidator<CreateMemberRequest>, CreateMemberRequestValidator>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
