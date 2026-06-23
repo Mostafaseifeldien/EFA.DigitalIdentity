@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using EFA.Application.Common.Interfaces;
 using EFA.Domain.Identity;
 using EFA.Domain.Members;
+using EFA.Domain.Matches;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,10 @@ namespace EFA.Infrastructure.Persistence
 
         }
         public DbSet<Member> Members => Set<Member>();
+        public DbSet<Tournament> Tournaments => Set<Tournament>();
+        public DbSet<Team> Teams => Set<Team>();
+        public DbSet<Stadium> Stadiums => Set<Stadium>();
+        public DbSet<Match> Matches => Set<Match>();
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -43,6 +48,54 @@ namespace EFA.Infrastructure.Persistence
                 entity.HasOne(x => x.User)
                     .WithOne()
                     .HasForeignKey<Member>(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Tournament>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.HasIndex(x => x.Name).IsUnique();
+            });
+
+            builder.Entity<Team>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.HasIndex(x => x.Name).IsUnique();
+            });
+
+            builder.Entity<Stadium>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.HasIndex(x => x.Name).IsUnique();
+            });
+
+            builder.Entity<Match>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Round).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Notes).HasMaxLength(2000);
+
+                entity.HasOne(x => x.Tournament)
+                    .WithMany()
+                    .HasForeignKey(x => x.TournamentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.HomeTeam)
+                    .WithMany()
+                    .HasForeignKey(x => x.HomeTeamId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.AwayTeam)
+                    .WithMany()
+                    .HasForeignKey(x => x.AwayTeamId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Stadium)
+                    .WithMany()
+                    .HasForeignKey(x => x.StadiumId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
