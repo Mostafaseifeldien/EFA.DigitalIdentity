@@ -23,10 +23,12 @@ namespace EFA.Infrastructure.Persistence
             string[] roles =
             [
                 "Admin",
-            "CompetitionsAdmin",
-            "RefereeCommittee",
+            "MembershipOfficer",
+            "AssignmentsOfficer",
+            "CommunicationsOfficer",
             "SecurityOfficer",
-            "ReportsViewer"
+            "ReportsViewer",
+            "Member"
             ];
 
             foreach (var role in roles)
