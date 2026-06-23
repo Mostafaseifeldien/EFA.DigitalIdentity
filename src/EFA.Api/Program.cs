@@ -1,7 +1,9 @@
 using System.Text;
+using EFA.Application.Members.CreateMember;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
 using EFA.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -91,6 +93,8 @@ builder.Services
             ClockSkew = TimeSpan.Zero
         };
     });
+builder.Services.AddScoped<CreateMemberHandler>();
+builder.Services.AddScoped<IValidator<CreateMemberRequest>, CreateMemberRequestValidator>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
