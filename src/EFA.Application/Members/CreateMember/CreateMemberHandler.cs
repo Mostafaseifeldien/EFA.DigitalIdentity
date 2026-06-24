@@ -178,8 +178,6 @@ namespace EFA.Application.Members.CreateMember
                 "أمن" => MemberType.SecurityOfficer,
                 "الأمن" => MemberType.SecurityOfficer,
 
-                "موظف" => MemberType.Staff,
-
                 _ => MemberType.Member
             };
         }
