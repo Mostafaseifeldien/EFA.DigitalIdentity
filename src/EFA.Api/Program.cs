@@ -1,6 +1,9 @@
 using System.Text;
 using EFA.Application.Members.CreateMember;
+using EFA.Application.Members.GetMemberById;
 using EFA.Application.Members.GetMembers;
+using EFA.Application.Members.ToggleMemberStatus;
+using EFA.Application.Members.UpdateMember;
 using EFA.Application.Matches.CreateMatch;
 using EFA.Application.Matches.GetMatchById;
 using EFA.Application.Matches.GetMatchLookups;
@@ -102,6 +105,10 @@ builder.Services
 builder.Services.AddScoped<CreateMemberHandler>();
 builder.Services.AddScoped<GetMembersHandler>();
 builder.Services.AddScoped<IValidator<CreateMemberRequest>, CreateMemberRequestValidator>();
+builder.Services.AddScoped<GetMemberByIdHandler>();
+builder.Services.AddScoped<UpdateMemberHandler>();
+builder.Services.AddScoped<ToggleMemberStatusHandler>();
+builder.Services.AddScoped<IValidator<UpdateMemberCommand>, UpdateMemberCommandValidator>();
 builder.Services.AddScoped<GetMatchesHandler>();
 builder.Services.AddScoped<CreateMatchHandler>();
 builder.Services.AddScoped<GetMatchLookupsHandler>();
