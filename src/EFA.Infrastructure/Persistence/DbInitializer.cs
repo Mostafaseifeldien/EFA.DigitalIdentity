@@ -30,7 +30,8 @@ namespace EFA.Infrastructure.Persistence
             "CommunicationsOfficer",
             "SecurityOfficer",
             "ReportsViewer",
-            "Member"
+            "Member",
+            "RefereeCommittee"
             ];
 
             foreach (var role in roles)
