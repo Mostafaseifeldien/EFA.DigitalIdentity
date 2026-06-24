@@ -1,9 +1,14 @@
 using System.Text;
 using EFA.Application.Members.CreateMember;
+using EFA.Application.Members.GetMemberById;
 using EFA.Application.Members.GetMembers;
+using EFA.Application.Members.ToggleMemberStatus;
+using EFA.Application.Members.UpdateMember;
 using EFA.Application.Matches.CreateMatch;
+using EFA.Application.Matches.GetMatchById;
 using EFA.Application.Matches.GetMatchLookups;
 using EFA.Application.Matches.GetMatches;
+using EFA.Application.Matches.UpdateMatch;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
 using EFA.Infrastructure.Persistence;
@@ -17,6 +22,16 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularClient", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -100,10 +115,17 @@ builder.Services
 builder.Services.AddScoped<CreateMemberHandler>();
 builder.Services.AddScoped<GetMembersHandler>();
 builder.Services.AddScoped<IValidator<CreateMemberRequest>, CreateMemberRequestValidator>();
+builder.Services.AddScoped<GetMemberByIdHandler>();
+builder.Services.AddScoped<UpdateMemberHandler>();
+builder.Services.AddScoped<ToggleMemberStatusHandler>();
+builder.Services.AddScoped<IValidator<UpdateMemberCommand>, UpdateMemberCommandValidator>();
 builder.Services.AddScoped<GetMatchesHandler>();
 builder.Services.AddScoped<CreateMatchHandler>();
 builder.Services.AddScoped<GetMatchLookupsHandler>();
 builder.Services.AddScoped<IValidator<CreateMatchRequest>, CreateMatchRequestValidator>();
+builder.Services.AddScoped<GetMatchByIdHandler>();
+builder.Services.AddScoped<UpdateMatchHandler>();
+builder.Services.AddScoped<IValidator<UpdateMatchCommand>, UpdateMatchCommandValidator>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
@@ -125,6 +147,8 @@ using (var scope = app.Services.CreateScope())
 //}
 
 app.UseHttpsRedirection();
+
+app.UseCors("AngularClient");
 
 app.UseAuthentication();
 app.UseAuthorization();

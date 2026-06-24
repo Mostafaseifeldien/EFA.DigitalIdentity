@@ -7,7 +7,7 @@ namespace EFA.Application.Matches.CreateMatch
         public CreateMatchRequestValidator()
         {
             RuleFor(x => x.TournamentId)
-                .NotEmpty().WithMessage("Tournament is required.");
+                .GreaterThan(0).WithMessage("Tournament is required.");
 
             RuleFor(x => x.Round)
                 .NotEmpty().WithMessage("Round is required.")
@@ -22,7 +22,7 @@ namespace EFA.Application.Matches.CreateMatch
                 .MaximumLength(200);
 
             RuleFor(x => x.StadiumId)
-                .NotEmpty().WithMessage("Stadium is required.");
+                .GreaterThan(0).WithMessage("Stadium is required.");
 
             RuleFor(x => x.MatchDateTime)
                 .NotEmpty().WithMessage("Match date and time is required.");

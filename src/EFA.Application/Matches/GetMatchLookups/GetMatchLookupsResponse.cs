@@ -2,7 +2,7 @@ namespace EFA.Application.Matches.GetMatchLookups
 {
     public sealed class MatchLookupItemResponse
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 

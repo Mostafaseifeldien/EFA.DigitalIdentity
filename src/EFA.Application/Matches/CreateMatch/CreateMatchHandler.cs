@@ -109,7 +109,6 @@ namespace EFA.Application.Matches.CreateMatch
 
             var team = new Team
             {
-                Id = Guid.NewGuid(),
                 Name = normalizedName,
                 CreatedAt = DateTime.UtcNow
             };

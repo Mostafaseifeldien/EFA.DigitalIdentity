@@ -1,7 +1,9 @@
 using EFA.Api.Common;
 using EFA.Application.Matches.CreateMatch;
+using EFA.Application.Matches.GetMatchById;
 using EFA.Application.Matches.GetMatchLookups;
 using EFA.Application.Matches.GetMatches;
+using EFA.Application.Matches.UpdateMatch;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,15 +17,21 @@ namespace EFA.Api.Controllers
         private readonly GetMatchesHandler _getMatchesHandler;
         private readonly CreateMatchHandler _createMatchHandler;
         private readonly GetMatchLookupsHandler _getMatchLookupsHandler;
+        private readonly GetMatchByIdHandler _getMatchByIdHandler;
+        private readonly UpdateMatchHandler _updateMatchHandler;
 
         public MatchesController(
             GetMatchesHandler getMatchesHandler,
             CreateMatchHandler createMatchHandler,
-            GetMatchLookupsHandler getMatchLookupsHandler)
+            GetMatchLookupsHandler getMatchLookupsHandler,
+            GetMatchByIdHandler getMatchByIdHandler,
+            UpdateMatchHandler updateMatchHandler)
         {
             _getMatchesHandler = getMatchesHandler;
             _createMatchHandler = createMatchHandler;
             _getMatchLookupsHandler = getMatchLookupsHandler;
+            _getMatchByIdHandler = getMatchByIdHandler;
+            _updateMatchHandler = updateMatchHandler;
         }
 
         [HttpGet]
@@ -79,6 +87,61 @@ namespace EFA.Api.Controllers
             return Ok(ApiResponse<CreateMatchResponse>.Success(
                 result.Data!,
                 "Match created and published successfully."));
+        }
+
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetMatchById(
+            Guid id,
+            CancellationToken cancellationToken)
+        {
+            var result = await _getMatchByIdHandler.HandleAsync(
+                new GetMatchByIdQuery { Id = id },
+                cancellationToken);
+
+            if (result.IsNotFound)
+            {
+                return NotFound(ApiResponse<object>.Fail(
+                    "Match not found.",
+                    result.Errors));
+            }
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Failed to retrieve match.",
+                    result.Errors));
+            }
+
+            return Ok(ApiResponse<GetMatchByIdResponse>.Success(
+                result.Data!,
+                "Match retrieved successfully."));
+        }
+
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> UpdateMatch(
+            Guid id,
+            [FromBody] UpdateMatchCommand command,
+            CancellationToken cancellationToken)
+        {
+            var result = await _updateMatchHandler.HandleAsync(id, command, cancellationToken);
+
+            if (result.IsNotFound)
+            {
+                return NotFound(ApiResponse<object>.Fail(
+                    "Match not found.",
+                    result.Errors));
+            }
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Failed to update match.",
+                    result.Errors));
+            }
+
+            return Ok(ApiResponse<UpdateMatchResponse>.Success(
+                result.Data!,
+                "Match updated successfully."));
         }
     }
 }

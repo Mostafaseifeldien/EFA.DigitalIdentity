@@ -76,7 +76,7 @@ namespace EFA.Application.Matches.GetMatches
 
         private static bool TryParseTournamentFilter(
             string? tournament,
-            out Guid? tournamentIdFilter,
+            out int? tournamentIdFilter,
             out string? tournamentNameFilter,
             out string? error)
         {
@@ -91,7 +91,7 @@ namespace EFA.Application.Matches.GetMatches
 
             var value = tournament.Trim();
 
-            if (Guid.TryParse(value, out var tournamentId))
+            if (int.TryParse(value, out var tournamentId) && tournamentId > 0)
             {
                 tournamentIdFilter = tournamentId;
                 return true;

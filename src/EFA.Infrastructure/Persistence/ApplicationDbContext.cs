@@ -54,6 +54,7 @@ namespace EFA.Infrastructure.Persistence
             builder.Entity<Tournament>(entity =>
             {
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).ValueGeneratedOnAdd();
                 entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
                 entity.HasIndex(x => x.Name).IsUnique();
             });
@@ -61,6 +62,7 @@ namespace EFA.Infrastructure.Persistence
             builder.Entity<Team>(entity =>
             {
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).ValueGeneratedOnAdd();
                 entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
                 entity.HasIndex(x => x.Name).IsUnique();
             });
@@ -68,6 +70,7 @@ namespace EFA.Infrastructure.Persistence
             builder.Entity<Stadium>(entity =>
             {
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).ValueGeneratedOnAdd();
                 entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
                 entity.HasIndex(x => x.Name).IsUnique();
             });
