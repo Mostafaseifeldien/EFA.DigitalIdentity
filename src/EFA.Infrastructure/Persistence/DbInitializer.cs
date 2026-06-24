@@ -86,7 +86,6 @@ namespace EFA.Infrastructure.Persistence
                 {
                     dbContext.Tournaments.Add(new Tournament
                     {
-                        Id = Guid.NewGuid(),
                         Name = name,
                         CreatedAt = DateTime.UtcNow
                     });
@@ -105,7 +104,6 @@ namespace EFA.Infrastructure.Persistence
                 {
                     dbContext.Stadiums.Add(new Stadium
                     {
-                        Id = Guid.NewGuid(),
                         Name = name,
                         CreatedAt = DateTime.UtcNow
                     });
@@ -127,7 +125,6 @@ namespace EFA.Infrastructure.Persistence
                 {
                     dbContext.Teams.Add(new Team
                     {
-                        Id = Guid.NewGuid(),
                         Name = name,
                         CreatedAt = DateTime.UtcNow
                     });

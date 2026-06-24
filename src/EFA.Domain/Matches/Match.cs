@@ -4,18 +4,18 @@ namespace EFA.Domain.Matches
     {
         public Guid Id { get; set; }
 
-        public Guid TournamentId { get; set; }
+        public int TournamentId { get; set; }
         public Tournament Tournament { get; set; } = null!;
 
         public string Round { get; set; } = string.Empty;
 
-        public Guid HomeTeamId { get; set; }
+        public int HomeTeamId { get; set; }
         public Team HomeTeam { get; set; } = null!;
 
-        public Guid AwayTeamId { get; set; }
+        public int AwayTeamId { get; set; }
         public Team AwayTeam { get; set; } = null!;
 
-        public Guid StadiumId { get; set; }
+        public int StadiumId { get; set; }
         public Stadium Stadium { get; set; } = null!;
 
         public DateTime MatchDateTime { get; set; }
