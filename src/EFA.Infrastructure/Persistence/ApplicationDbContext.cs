@@ -7,6 +7,8 @@ using EFA.Application.Common.Interfaces;
 using EFA.Domain.Identity;
 using EFA.Domain.Members;
 using EFA.Domain.Matches;
+using EFA.Domain.Assignments;
+using EFA.Domain.Notifications;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +29,8 @@ namespace EFA.Infrastructure.Persistence
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<Stadium> Stadiums => Set<Stadium>();
         public DbSet<Match> Matches => Set<Match>();
+        public DbSet<Assignment> Assignments => Set<Assignment>();
+        public DbSet<Notification> Notifications => Set<Notification>();
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -100,6 +104,33 @@ namespace EFA.Infrastructure.Persistence
                     .WithMany()
                     .HasForeignKey(x => x.StadiumId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Assignment>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.ConflictMessage).HasMaxLength(500);
+
+                entity.HasOne(x => x.Match)
+                    .WithMany()
+                    .HasForeignKey(x => x.MatchId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Member)
+                    .WithMany()
+                    .HasForeignKey(x => x.MemberId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new { x.MatchId, x.AssignmentRole, x.Status });
+                entity.HasIndex(x => new { x.MemberId, x.Status });
+            });
+
+            builder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+                entity.Property(x => x.Message).HasMaxLength(1000).IsRequired();
+                entity.HasIndex(x => x.UserId);
             });
         }
     }
