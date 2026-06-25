@@ -47,7 +47,7 @@ namespace EFA.Application.Assignments.CancelAssignment
                 NotificationType.AssignmentCancelled,
                 AssignmentNotificationService.BuildCancelledMessage(
                     AssignmentMatchHelper.GetMatchName(assignment.Match),
-                    assignment.AssignmentRole));
+                    AssignmentRoleMappings.GetDisplayName(assignment)));
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 

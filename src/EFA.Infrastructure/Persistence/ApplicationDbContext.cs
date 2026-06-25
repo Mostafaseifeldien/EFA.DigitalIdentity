@@ -109,6 +109,7 @@ namespace EFA.Infrastructure.Persistence
             builder.Entity<Assignment>(entity =>
             {
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.AssignmentRoleName).HasMaxLength(100).IsRequired();
                 entity.Property(x => x.ConflictMessage).HasMaxLength(500);
 
                 entity.HasOne(x => x.Match)

@@ -56,7 +56,7 @@ namespace EFA.Application.Assignments.GetAssignments
                     MatchId = x.MatchId,
                     MatchName = AssignmentMatchHelper.GetMatchName(x.Match),
                     AssignmentRole = x.AssignmentRole,
-                    AssignmentRoleName = AssignmentRoleMappings.GetArabicName(x.AssignmentRole),
+                    AssignmentRoleName = AssignmentRoleMappings.GetDisplayName(x),
                     Status = x.Status,
                     StatusName = AssignmentStatusMappings.GetArabicName(x.Status),
                     HasConflict = x.HasConflict,

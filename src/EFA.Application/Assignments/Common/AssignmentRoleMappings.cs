@@ -52,6 +52,40 @@ namespace EFA.Application.Assignments.Common
             return true;
         }
 
+        public static (AssignmentRole Role, string RoleName) ResolveAssignmentRole(string role)
+        {
+            var trimmed = role.Trim();
+
+            if (TryParseFromArabic(trimmed, out var arabicRole, out _))
+            {
+                return (arabicRole, GetArabicName(arabicRole));
+            }
+
+            if (Enum.TryParse<AssignmentRole>(trimmed, true, out var englishRole))
+            {
+                return (englishRole, GetArabicName(englishRole));
+            }
+
+            if (int.TryParse(trimmed, out var intValue) &&
+                Enum.IsDefined(typeof(AssignmentRole), intValue))
+            {
+                var enumRole = (AssignmentRole)intValue;
+                return (enumRole, GetArabicName(enumRole));
+            }
+
+            return (AssignmentRole.Observer, trimmed);
+        }
+
+        public static string GetDisplayName(Assignment assignment)
+        {
+            if (!string.IsNullOrWhiteSpace(assignment.AssignmentRoleName))
+            {
+                return assignment.AssignmentRoleName;
+            }
+
+            return GetArabicName(assignment.AssignmentRole);
+        }
+
         public static IReadOnlyList<AssignmentRoleLookupItem> GetAllRoles()
         {
             return Enum.GetValues<AssignmentRole>()

@@ -45,10 +45,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
                     false);
             }
 
-            if (!AssignmentRoleMappings.TryParseFromArabic(command.AssignmentRole, out var role, out var roleError))
-            {
-                return (false, null, null, new List<string> { roleError! }, false, false);
-            }
+            var (role, roleName) = AssignmentRoleMappings.ResolveAssignmentRole(command.AssignmentRole);
 
             var assignment = await _dbContext.Assignments
                 .Include(x => x.Member)
@@ -83,17 +80,24 @@ namespace EFA.Application.Assignments.UpdateAssignment
                 return (false, null, null, new List<string> { "Inactive members cannot be assigned." }, false, false);
             }
 
-            var duplicateRoleExists = await _dbContext.Assignments.AnyAsync(
-                x =>
+            var duplicateRoleExists = await _dbContext.Assignments
+                .AsNoTracking()
+                .Where(x =>
                     x.MatchId == assignment.MatchId &&
                     x.Id != assignment.Id &&
-                    x.Status != AssignmentStatus.Cancelled &&
-                    x.AssignmentRole == role,
-                cancellationToken);
+                    x.Status != AssignmentStatus.Cancelled)
+                .Select(x => new { x.AssignmentRoleName, x.AssignmentRole })
+                .ToListAsync(cancellationToken);
 
-            if (duplicateRoleExists)
+            var duplicateRoleName = duplicateRoleExists
+                .Select(x => string.IsNullOrWhiteSpace(x.AssignmentRoleName)
+                    ? AssignmentRoleMappings.GetArabicName(x.AssignmentRole)
+                    : x.AssignmentRoleName)
+                .Any(x => string.Equals(x, roleName, StringComparison.OrdinalIgnoreCase));
+
+            if (duplicateRoleName)
             {
-                return (false, null, null, new List<string> { $"The role '{AssignmentRoleMappings.GetArabicName(role)}' is already assigned for this match." }, false, false);
+                return (false, null, null, new List<string> { $"The role '{roleName}' is already assigned for this match." }, false, false);
             }
 
             var duplicateMemberExists = await _dbContext.Assignments.AnyAsync(
@@ -135,6 +139,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
             var hasConflict = conflict is not null;
             assignment.MemberId = member.Id;
             assignment.AssignmentRole = role;
+            assignment.AssignmentRoleName = roleName;
             assignment.HasConflict = hasConflict;
             assignment.ConflictMessage = hasConflict
                 ? AssignmentConflictService.BuildConflictMessage(member.FullName)
@@ -148,7 +153,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
                 NotificationType.AssignmentUpdated,
                 AssignmentNotificationService.BuildUpdatedMessage(
                     AssignmentMatchHelper.GetMatchName(assignment.Match),
-                    role,
+                    roleName,
                     assignment.Match.MatchDateTime));
 
             await _dbContext.SaveChangesAsync(cancellationToken);

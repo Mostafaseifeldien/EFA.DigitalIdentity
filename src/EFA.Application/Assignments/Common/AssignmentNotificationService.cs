@@ -1,5 +1,4 @@
 using EFA.Application.Common.Interfaces;
-using EFA.Domain.Assignments;
 using EFA.Domain.Notifications;
 
 namespace EFA.Application.Assignments.Common
@@ -25,23 +24,23 @@ namespace EFA.Application.Assignments.Common
 
         public static string BuildCreatedMessage(
             string matchName,
-            AssignmentRole role,
+            string roleName,
             DateTime matchDateTime)
         {
-            return $"تم تكليفك في مباراة {matchName} بدور {AssignmentRoleMappings.GetArabicName(role)} بتاريخ {matchDateTime:dd/MM/yyyy HH:mm}.";
+            return $"تم تكليفك في مباراة {matchName} بدور {roleName} بتاريخ {matchDateTime:dd/MM/yyyy HH:mm}.";
         }
 
         public static string BuildUpdatedMessage(
             string matchName,
-            AssignmentRole role,
+            string roleName,
             DateTime matchDateTime)
         {
-            return $"تم تحديث تكليفك في مباراة {matchName} بدور {AssignmentRoleMappings.GetArabicName(role)} بتاريخ {matchDateTime:dd/MM/yyyy HH:mm}.";
+            return $"تم تحديث تكليفك في مباراة {matchName} بدور {roleName} بتاريخ {matchDateTime:dd/MM/yyyy HH:mm}.";
         }
 
-        public static string BuildCancelledMessage(string matchName, AssignmentRole role)
+        public static string BuildCancelledMessage(string matchName, string roleName)
         {
-            return $"تم إلغاء تكليفك في مباراة {matchName} بدور {AssignmentRoleMappings.GetArabicName(role)}.";
+            return $"تم إلغاء تكليفك في مباراة {matchName} بدور {roleName}.";
         }
     }
 }

@@ -14,6 +14,7 @@ namespace EFA.Domain.Assignments
         public Member Member { get; set; } = null!;
 
         public AssignmentRole AssignmentRole { get; set; }
+        public string AssignmentRoleName { get; set; } = string.Empty;
         public AssignmentStatus Status { get; set; }
 
         public bool HasConflict { get; set; }
