@@ -6,6 +6,7 @@ using EFA.Application.Assignments.Common;
 using EFA.Application.Assignments.GetAssignmentById;
 using EFA.Application.Assignments.GetAssignmentLookups;
 using EFA.Application.Assignments.GetAssignments;
+using EFA.Application.Assignments.GetMyAssignments;
 using EFA.Application.Assignments.UpdateAssignment;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace EFA.Api.Controllers
         private readonly GetAssignmentByIdHandler _getAssignmentByIdHandler;
         private readonly UpdateAssignmentHandler _updateAssignmentHandler;
         private readonly CancelAssignmentHandler _cancelAssignmentHandler;
+        private readonly GetMyAssignmentsHandler _getMyAssignmentsHandler;
 
         public AssignmentsController(
             GetAssignmentsHandler getAssignmentsHandler,
@@ -30,7 +32,8 @@ namespace EFA.Api.Controllers
             BulkCreateAssignmentsHandler bulkCreateAssignmentsHandler,
             GetAssignmentByIdHandler getAssignmentByIdHandler,
             UpdateAssignmentHandler updateAssignmentHandler,
-            CancelAssignmentHandler cancelAssignmentHandler)
+            CancelAssignmentHandler cancelAssignmentHandler,
+            GetMyAssignmentsHandler getMyAssignmentsHandler)
         {
             _getAssignmentsHandler = getAssignmentsHandler;
             _getAssignmentLookupsHandler = getAssignmentLookupsHandler;
@@ -38,6 +41,7 @@ namespace EFA.Api.Controllers
             _getAssignmentByIdHandler = getAssignmentByIdHandler;
             _updateAssignmentHandler = updateAssignmentHandler;
             _cancelAssignmentHandler = cancelAssignmentHandler;
+            _getMyAssignmentsHandler = getMyAssignmentsHandler;
         }
 
         [HttpGet]
@@ -64,6 +68,34 @@ namespace EFA.Api.Controllers
             return Ok(ApiResponse<List<GetAssignmentsResponse>>.Success(
                 result.Data!,
                 "Assignments retrieved successfully."));
+        }
+
+        [HttpGet("member/{memberId:guid}")]
+        public async Task<IActionResult> GetMemberAssignments(
+            Guid memberId,
+            CancellationToken cancellationToken)
+        {
+            var result = await _getMyAssignmentsHandler.HandleAsync(
+                new GetMyAssignmentsQuery { MemberId = memberId },
+                cancellationToken);
+
+            if (result.IsNotFound)
+            {
+                return NotFound(ApiResponse<object>.Fail(
+                    "Member was not found.",
+                    result.Errors));
+            }
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Failed to retrieve member assignments.",
+                    result.Errors));
+            }
+
+            return Ok(ApiResponse<List<MyAssignmentResponse>>.Success(
+                result.Data!,
+                "Member assignments retrieved successfully."));
         }
 
         [HttpGet("lookups")]
