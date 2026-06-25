@@ -14,6 +14,7 @@ using EFA.Application.Assignments.CancelAssignment;
 using EFA.Application.Assignments.GetAssignmentById;
 using EFA.Application.Assignments.GetAssignmentLookups;
 using EFA.Application.Assignments.GetAssignments;
+using EFA.Application.Assignments.GetMyAssignments;
 using EFA.Application.Assignments.UpdateAssignment;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
@@ -140,6 +141,7 @@ builder.Services.AddScoped<GetAssignmentByIdHandler>();
 builder.Services.AddScoped<UpdateAssignmentHandler>();
 builder.Services.AddScoped<IValidator<UpdateAssignmentCommand>, UpdateAssignmentCommandValidator>();
 builder.Services.AddScoped<CancelAssignmentHandler>();
+builder.Services.AddScoped<GetMyAssignmentsHandler>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();

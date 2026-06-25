@@ -27,7 +27,8 @@ namespace EFA.Application.Assignments.UpdateAssignment
             BulkCreateAssignmentsConflictResponse? Conflicts,
             List<string> Errors,
             bool IsNotFound,
-            bool IsConflict)> HandleAsync(
+            bool IsConflict,
+            bool IsModificationBlocked)> HandleAsync(
             Guid id,
             UpdateAssignmentCommand command,
             CancellationToken cancellationToken = default)
@@ -42,13 +43,11 @@ namespace EFA.Application.Assignments.UpdateAssignment
                     null,
                     validationResult.Errors.Select(x => x.ErrorMessage).ToList(),
                     false,
+                    false,
                     false);
             }
 
-            if (!AssignmentRoleMappings.TryParseFromArabic(command.AssignmentRole, out var role, out var roleError))
-            {
-                return (false, null, null, new List<string> { roleError! }, false, false);
-            }
+            var (role, roleName) = AssignmentRoleMappings.ResolveAssignmentRole(command.AssignmentRole);
 
             var assignment = await _dbContext.Assignments
                 .Include(x => x.Member)
@@ -62,12 +61,24 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (assignment is null)
             {
-                return (false, null, null, new List<string> { "Assignment not found." }, true, false);
+                return (false, null, null, new List<string> { "Assignment not found." }, true, false, false);
+            }
+
+            if (!AssignmentModificationRules.CanModify(assignment))
+            {
+                return (
+                    false,
+                    null,
+                    null,
+                    new List<string> { AssignmentModificationRules.ModificationNotAllowedMessage },
+                    false,
+                    false,
+                    true);
             }
 
             if (assignment.Status == AssignmentStatus.Cancelled)
             {
-                return (false, null, null, new List<string> { "Cancelled assignments cannot be updated." }, false, false);
+                return (false, null, null, new List<string> { "Cancelled assignments cannot be updated." }, false, false, false);
             }
 
             var member = await _dbContext.Members
@@ -75,25 +86,32 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (member is null)
             {
-                return (false, null, null, new List<string> { "Member not found." }, false, false);
+                return (false, null, null, new List<string> { "Member not found." }, false, false, false);
             }
 
             if (!member.IsActive)
             {
-                return (false, null, null, new List<string> { "Inactive members cannot be assigned." }, false, false);
+                return (false, null, null, new List<string> { "Inactive members cannot be assigned." }, false, false, false);
             }
 
-            var duplicateRoleExists = await _dbContext.Assignments.AnyAsync(
-                x =>
+            var duplicateRoleExists = await _dbContext.Assignments
+                .AsNoTracking()
+                .Where(x =>
                     x.MatchId == assignment.MatchId &&
                     x.Id != assignment.Id &&
-                    x.Status != AssignmentStatus.Cancelled &&
-                    x.AssignmentRole == role,
-                cancellationToken);
+                    x.Status != AssignmentStatus.Cancelled)
+                .Select(x => new { x.AssignmentRoleName, x.AssignmentRole })
+                .ToListAsync(cancellationToken);
 
-            if (duplicateRoleExists)
+            var duplicateRoleName = duplicateRoleExists
+                .Select(x => string.IsNullOrWhiteSpace(x.AssignmentRoleName)
+                    ? AssignmentRoleMappings.GetArabicName(x.AssignmentRole)
+                    : x.AssignmentRoleName)
+                .Any(x => string.Equals(x, roleName, StringComparison.OrdinalIgnoreCase));
+
+            if (duplicateRoleName)
             {
-                return (false, null, null, new List<string> { $"The role '{AssignmentRoleMappings.GetArabicName(role)}' is already assigned for this match." }, false, false);
+                return (false, null, null, new List<string> { $"The role '{roleName}' is already assigned for this match." }, false, false, false);
             }
 
             var duplicateMemberExists = await _dbContext.Assignments.AnyAsync(
@@ -106,7 +124,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (duplicateMemberExists)
             {
-                return (false, null, null, new List<string> { "This member is already assigned to the same match." }, false, false);
+                return (false, null, null, new List<string> { "This member is already assigned to the same match." }, false, false, false);
             }
 
             var conflict = await AssignmentConflictService.DetectConflictAsync(
@@ -129,12 +147,14 @@ namespace EFA.Application.Assignments.UpdateAssignment
                     },
                     new List<string> { "Assignment conflict detected." },
                     false,
-                    true);
+                    true,
+                    false);
             }
 
             var hasConflict = conflict is not null;
             assignment.MemberId = member.Id;
             assignment.AssignmentRole = role;
+            assignment.AssignmentRoleName = roleName;
             assignment.HasConflict = hasConflict;
             assignment.ConflictMessage = hasConflict
                 ? AssignmentConflictService.BuildConflictMessage(member.FullName)
@@ -148,7 +168,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
                 NotificationType.AssignmentUpdated,
                 AssignmentNotificationService.BuildUpdatedMessage(
                     AssignmentMatchHelper.GetMatchName(assignment.Match),
-                    role,
+                    roleName,
                     assignment.Match.MatchDateTime));
 
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -160,6 +180,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
                 AssignmentResponseMapper.MapToDetails(assignment),
                 null,
                 new List<string>(),
+                false,
                 false,
                 false);
         }

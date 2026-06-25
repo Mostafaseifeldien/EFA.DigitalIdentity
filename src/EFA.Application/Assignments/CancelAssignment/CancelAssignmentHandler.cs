@@ -15,7 +15,7 @@ namespace EFA.Application.Assignments.CancelAssignment
             _dbContext = dbContext;
         }
 
-        public async Task<(bool IsSuccess, AssignmentDetailsResponse? Data, List<string> Errors, bool IsNotFound)> HandleAsync(
+        public async Task<(bool IsSuccess, AssignmentDetailsResponse? Data, List<string> Errors, bool IsNotFound, bool IsModificationBlocked)> HandleAsync(
             CancelAssignmentCommand command,
             CancellationToken cancellationToken = default)
         {
@@ -29,12 +29,22 @@ namespace EFA.Application.Assignments.CancelAssignment
 
             if (assignment is null)
             {
-                return (false, null, new List<string> { "Assignment not found." }, true);
+                return (false, null, new List<string> { "Assignment not found." }, true, false);
             }
 
             if (assignment.Status == AssignmentStatus.Cancelled)
             {
-                return (false, null, new List<string> { "Assignment is already cancelled." }, false);
+                return (false, null, new List<string> { "Assignment is already cancelled." }, false, false);
+            }
+
+            if (!AssignmentModificationRules.CanModify(assignment))
+            {
+                return (
+                    false,
+                    null,
+                    new List<string> { AssignmentModificationRules.CancellationNotAllowedMessage },
+                    false,
+                    true);
             }
 
             assignment.Status = AssignmentStatus.Cancelled;
@@ -47,11 +57,11 @@ namespace EFA.Application.Assignments.CancelAssignment
                 NotificationType.AssignmentCancelled,
                 AssignmentNotificationService.BuildCancelledMessage(
                     AssignmentMatchHelper.GetMatchName(assignment.Match),
-                    assignment.AssignmentRole));
+                    AssignmentRoleMappings.GetDisplayName(assignment)));
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            return (true, AssignmentResponseMapper.MapToDetails(assignment), new List<string>(), false);
+            return (true, AssignmentResponseMapper.MapToDetails(assignment), new List<string>(), false, false);
         }
     }
 }

@@ -1,7 +1,6 @@
 using EFA.Application.Assignments.Common;
 using EFA.Application.Common.Interfaces;
 using EFA.Domain.Assignments;
-using EFA.Domain.Matches;
 using EFA.Domain.Notifications;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -53,31 +52,23 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
                 return (false, null, null, new List<string> { "Match not found." }, false);
             }
 
-            var parsedRows = new List<(Guid MemberId, AssignmentRole Role)>();
-            var errors = new List<string>();
-
-            foreach (var row in request.Assignments)
-            {
-                if (!AssignmentRoleMappings.TryParseFromArabic(row.AssignmentRole, out var role, out var roleError))
+            var parsedRows = request.Assignments
+                .Select(row =>
                 {
-                    errors.Add(roleError!);
-                    continue;
-                }
-
-                parsedRows.Add((row.MemberId, role));
-            }
-
-            if (errors.Count > 0)
-            {
-                return (false, null, null, errors, false);
-            }
+                    var resolved = AssignmentRoleMappings.ResolveAssignmentRole(row.AssignmentRole);
+                    return (row.MemberId, resolved.Role, resolved.RoleName);
+                })
+                .ToList();
 
             if (parsedRows.Select(x => x.MemberId).Distinct().Count() != parsedRows.Count)
             {
                 return (false, null, null, new List<string> { "The same member cannot be assigned more than once in the same request." }, false);
             }
 
-            if (parsedRows.Select(x => x.Role).Distinct().Count() != parsedRows.Count)
+            if (parsedRows
+                    .Select(x => x.RoleName)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Count() != parsedRows.Count)
             {
                 return (false, null, null, new List<string> { "The same assignment role cannot be duplicated in the same request." }, false);
             }
@@ -99,22 +90,29 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
                 return (false, null, null, new List<string> { $"Inactive members cannot be assigned: {string.Join(", ", inactiveMembers)}." }, false);
             }
 
-            var roles = parsedRows.Select(x => x.Role).ToList();
-            var existingRoles = await _dbContext.Assignments
+            var requestedRoleNames = parsedRows
+                .Select(x => x.RoleName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var existingAssignments = await _dbContext.Assignments
+                .AsNoTracking()
                 .Where(x =>
                     x.MatchId == request.MatchId &&
-                    x.Status != AssignmentStatus.Cancelled &&
-                    roles.Contains(x.AssignmentRole))
-                .Select(x => x.AssignmentRole)
+                    x.Status != AssignmentStatus.Cancelled)
+                .Select(x => new { x.AssignmentRoleName, x.AssignmentRole })
                 .ToListAsync(cancellationToken);
 
-            if (existingRoles.Count > 0)
-            {
-                var roleNames = existingRoles
-                    .Select(AssignmentRoleMappings.GetArabicName)
-                    .ToList();
+            var duplicateRoleNames = existingAssignments
+                .Select(x => string.IsNullOrWhiteSpace(x.AssignmentRoleName)
+                    ? AssignmentRoleMappings.GetArabicName(x.AssignmentRole)
+                    : x.AssignmentRoleName)
+                .Where(x => requestedRoleNames.Contains(x, StringComparer.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-                return (false, null, null, new List<string> { $"The following roles are already assigned for this match: {string.Join(", ", roleNames)}." }, false);
+            if (duplicateRoleNames.Count > 0)
+            {
+                return (false, null, null, new List<string> { $"The following roles are already assigned for this match: {string.Join(", ", duplicateRoleNames)}." }, false);
             }
 
             var membersForConflictCheck = members
@@ -155,6 +153,7 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
                     MatchId = match.Id,
                     MemberId = member.Id,
                     AssignmentRole = row.Role,
+                    AssignmentRoleName = row.RoleName,
                     Status = hasConflict ? AssignmentStatus.Conflict : AssignmentStatus.Confirmed,
                     HasConflict = hasConflict,
                     ConflictMessage = conflictMessage,
@@ -168,7 +167,10 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
                     _dbContext,
                     member.UserId,
                     NotificationType.AssignmentCreated,
-                    AssignmentNotificationService.BuildCreatedMessage(matchName, row.Role, match.MatchDateTime));
+                    AssignmentNotificationService.BuildCreatedMessage(
+                        matchName,
+                        row.RoleName,
+                        match.MatchDateTime));
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);

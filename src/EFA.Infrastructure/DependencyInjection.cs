@@ -23,6 +23,7 @@ namespace EFA.Infrastructure
                 provider => provider.GetRequiredService<ApplicationDbContext>());
 
             services.AddScoped<IFileStorageService, FileStorageService>();
+            services.AddScoped<IUserRoleReader, UserRoleReader>();
             return services;
         }
     }
