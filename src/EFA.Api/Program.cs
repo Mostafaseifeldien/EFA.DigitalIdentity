@@ -9,6 +9,12 @@ using EFA.Application.Matches.GetMatchById;
 using EFA.Application.Matches.GetMatchLookups;
 using EFA.Application.Matches.GetMatches;
 using EFA.Application.Matches.UpdateMatch;
+using EFA.Application.Assignments.BulkCreateAssignments;
+using EFA.Application.Assignments.CancelAssignment;
+using EFA.Application.Assignments.GetAssignmentById;
+using EFA.Application.Assignments.GetAssignmentLookups;
+using EFA.Application.Assignments.GetAssignments;
+using EFA.Application.Assignments.UpdateAssignment;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
 using EFA.Infrastructure.Persistence;
@@ -126,6 +132,14 @@ builder.Services.AddScoped<IValidator<CreateMatchRequest>, CreateMatchRequestVal
 builder.Services.AddScoped<GetMatchByIdHandler>();
 builder.Services.AddScoped<UpdateMatchHandler>();
 builder.Services.AddScoped<IValidator<UpdateMatchCommand>, UpdateMatchCommandValidator>();
+builder.Services.AddScoped<GetAssignmentsHandler>();
+builder.Services.AddScoped<GetAssignmentLookupsHandler>();
+builder.Services.AddScoped<BulkCreateAssignmentsHandler>();
+builder.Services.AddScoped<IValidator<BulkCreateAssignmentsRequest>, BulkCreateAssignmentsRequestValidator>();
+builder.Services.AddScoped<GetAssignmentByIdHandler>();
+builder.Services.AddScoped<UpdateAssignmentHandler>();
+builder.Services.AddScoped<IValidator<UpdateAssignmentCommand>, UpdateAssignmentCommandValidator>();
+builder.Services.AddScoped<CancelAssignmentHandler>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
@@ -152,7 +166,7 @@ app.UseCors("AngularClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();
