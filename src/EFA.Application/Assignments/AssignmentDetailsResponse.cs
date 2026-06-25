@@ -28,7 +28,7 @@ namespace EFA.Application.Assignments
     {
         public static AssignmentDetailsResponse MapToDetails(Assignment assignment)
         {
-            var canModify = assignment.Status != AssignmentStatus.Cancelled;
+            var canModify = AssignmentModificationRules.CanModify(assignment);
 
             return new AssignmentDetailsResponse
             {

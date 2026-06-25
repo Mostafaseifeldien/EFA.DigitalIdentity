@@ -46,7 +46,7 @@ namespace EFA.Application.Assignments.GetAssignments
 
             var response = assignments.Select(x =>
             {
-                var canModify = x.Status != AssignmentStatus.Cancelled;
+                var canModify = AssignmentModificationRules.CanModify(x.Status, x.Match.MatchDateTime);
 
                 return new GetAssignmentsResponse
                 {

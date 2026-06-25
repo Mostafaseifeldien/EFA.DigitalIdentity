@@ -27,7 +27,8 @@ namespace EFA.Application.Assignments.UpdateAssignment
             BulkCreateAssignmentsConflictResponse? Conflicts,
             List<string> Errors,
             bool IsNotFound,
-            bool IsConflict)> HandleAsync(
+            bool IsConflict,
+            bool IsModificationBlocked)> HandleAsync(
             Guid id,
             UpdateAssignmentCommand command,
             CancellationToken cancellationToken = default)
@@ -41,6 +42,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
                     null,
                     null,
                     validationResult.Errors.Select(x => x.ErrorMessage).ToList(),
+                    false,
                     false,
                     false);
             }
@@ -59,12 +61,24 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (assignment is null)
             {
-                return (false, null, null, new List<string> { "Assignment not found." }, true, false);
+                return (false, null, null, new List<string> { "Assignment not found." }, true, false, false);
+            }
+
+            if (!AssignmentModificationRules.CanModify(assignment))
+            {
+                return (
+                    false,
+                    null,
+                    null,
+                    new List<string> { AssignmentModificationRules.ModificationNotAllowedMessage },
+                    false,
+                    false,
+                    true);
             }
 
             if (assignment.Status == AssignmentStatus.Cancelled)
             {
-                return (false, null, null, new List<string> { "Cancelled assignments cannot be updated." }, false, false);
+                return (false, null, null, new List<string> { "Cancelled assignments cannot be updated." }, false, false, false);
             }
 
             var member = await _dbContext.Members
@@ -72,12 +86,12 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (member is null)
             {
-                return (false, null, null, new List<string> { "Member not found." }, false, false);
+                return (false, null, null, new List<string> { "Member not found." }, false, false, false);
             }
 
             if (!member.IsActive)
             {
-                return (false, null, null, new List<string> { "Inactive members cannot be assigned." }, false, false);
+                return (false, null, null, new List<string> { "Inactive members cannot be assigned." }, false, false, false);
             }
 
             var duplicateRoleExists = await _dbContext.Assignments
@@ -97,7 +111,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (duplicateRoleName)
             {
-                return (false, null, null, new List<string> { $"The role '{roleName}' is already assigned for this match." }, false, false);
+                return (false, null, null, new List<string> { $"The role '{roleName}' is already assigned for this match." }, false, false, false);
             }
 
             var duplicateMemberExists = await _dbContext.Assignments.AnyAsync(
@@ -110,7 +124,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
 
             if (duplicateMemberExists)
             {
-                return (false, null, null, new List<string> { "This member is already assigned to the same match." }, false, false);
+                return (false, null, null, new List<string> { "This member is already assigned to the same match." }, false, false, false);
             }
 
             var conflict = await AssignmentConflictService.DetectConflictAsync(
@@ -133,7 +147,8 @@ namespace EFA.Application.Assignments.UpdateAssignment
                     },
                     new List<string> { "Assignment conflict detected." },
                     false,
-                    true);
+                    true,
+                    false);
             }
 
             var hasConflict = conflict is not null;
@@ -165,6 +180,7 @@ namespace EFA.Application.Assignments.UpdateAssignment
                 AssignmentResponseMapper.MapToDetails(assignment),
                 null,
                 new List<string>(),
+                false,
                 false,
                 false);
         }

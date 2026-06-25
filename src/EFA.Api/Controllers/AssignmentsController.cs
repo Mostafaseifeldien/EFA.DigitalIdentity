@@ -149,6 +149,13 @@ namespace EFA.Api.Controllers
                     result.Errors));
             }
 
+            if (result.IsModificationBlocked)
+            {
+                return Conflict(ApiResponse<object>.Fail(
+                    AssignmentModificationRules.ModificationNotAllowedMessage,
+                    result.Errors));
+            }
+
             if (result.IsConflict)
             {
                 return Conflict(new ApiResponse<BulkCreateAssignmentsConflictResponse>
@@ -185,6 +192,13 @@ namespace EFA.Api.Controllers
             {
                 return NotFound(ApiResponse<object>.Fail(
                     "Assignment not found.",
+                    result.Errors));
+            }
+
+            if (result.IsModificationBlocked)
+            {
+                return Conflict(ApiResponse<object>.Fail(
+                    AssignmentModificationRules.CancellationNotAllowedMessage,
                     result.Errors));
             }
 
