@@ -4,5 +4,7 @@ namespace EFA.Application.Assignments.GetMyAssignments
     {
         public string? UserId { get; set; }
         public Guid? MemberId { get; set; }
+        public string? Type { get; set; }
+        public string? Period { get; set; }
     }
 }

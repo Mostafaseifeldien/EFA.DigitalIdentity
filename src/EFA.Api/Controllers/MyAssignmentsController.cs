@@ -20,7 +20,10 @@ namespace EFA.Api.Controllers
         }
 
         [HttpGet("my")]
-        public async Task<IActionResult> GetMyAssignments(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetMyAssignments(
+            [FromQuery] string? type,
+            [FromQuery] string? period,
+            CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -32,7 +35,12 @@ namespace EFA.Api.Controllers
             }
 
             var result = await _getMyAssignmentsHandler.HandleAsync(
-                new GetMyAssignmentsQuery { UserId = userId },
+                new GetMyAssignmentsQuery
+                {
+                    UserId = userId,
+                    Type = type,
+                    Period = period
+                },
                 cancellationToken);
 
             if (result.IsNotFound)

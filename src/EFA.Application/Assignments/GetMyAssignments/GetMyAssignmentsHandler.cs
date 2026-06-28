@@ -1,5 +1,6 @@
 using EFA.Application.Assignments.Common;
 using EFA.Application.Common.Interfaces;
+using EFA.Domain.Assignments;
 using EFA.Domain.Members;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,11 @@ namespace EFA.Application.Assignments.GetMyAssignments
                 return (false, null, new List<string> { "Either userId or memberId is required." }, false);
             }
 
+            if (!TryValidateFilters(query, out var filter, out var validationErrors))
+            {
+                return (false, null, validationErrors, false);
+            }
+
             var member = await ResolveMemberAsync(query, cancellationToken);
 
             if (member is null)
@@ -34,9 +40,46 @@ namespace EFA.Application.Assignments.GetMyAssignments
                 return (false, null, new List<string> { notFoundMessage }, true);
             }
 
-            var response = await GetAssignmentsForMemberAsync(member.Id, cancellationToken);
+            var response = await GetAssignmentsForMemberAsync(member.Id, filter, cancellationToken);
 
             return (true, response, new List<string>(), false);
+        }
+
+        private static bool TryValidateFilters(
+            GetMyAssignmentsQuery query,
+            out MyAssignmentsFilter filter,
+            out List<string> errors)
+        {
+            filter = new MyAssignmentsFilter();
+            errors = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(query.Type))
+            {
+                var type = query.Type.Trim();
+
+                if (type is not ("next" or "previous"))
+                {
+                    errors.Add("type must be one of: next, previous");
+                    return false;
+                }
+
+                filter.Type = type;
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Period))
+            {
+                var period = query.Period.Trim();
+
+                if (!string.Equals(period, "today", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add("period must be: today");
+                    return false;
+                }
+
+                filter.Period = "today";
+            }
+
+            return true;
         }
 
         private async Task<Member?> ResolveMemberAsync(
@@ -62,9 +105,13 @@ namespace EFA.Application.Assignments.GetMyAssignments
 
         private async Task<List<MyAssignmentResponse>> GetAssignmentsForMemberAsync(
             Guid memberId,
+            MyAssignmentsFilter filter,
             CancellationToken cancellationToken)
         {
-            var assignments = await _dbContext.Assignments
+            var now = DateTime.Now;
+            var today = now.Date;
+
+            var assignmentsQuery = _dbContext.Assignments
                 .AsNoTracking()
                 .Include(x => x.Match)
                     .ThenInclude(x => x.Tournament)
@@ -74,9 +121,32 @@ namespace EFA.Application.Assignments.GetMyAssignments
                     .ThenInclude(x => x.AwayTeam)
                 .Include(x => x.Match)
                     .ThenInclude(x => x.Stadium)
-                .Where(x => x.MemberId == memberId)
-                .OrderBy(x => x.Match.MatchDateTime)
-                .ToListAsync(cancellationToken);
+                .Where(x =>
+                    x.MemberId == memberId &&
+                    x.Status != AssignmentStatus.Cancelled);
+
+            if (filter.Period == "today")
+            {
+                assignmentsQuery = assignmentsQuery.Where(x =>
+                    x.Match.MatchDateTime.Date == today &&
+                    x.Match.MatchDateTime >= now);
+            }
+            else if (filter.Type == "next")
+            {
+                assignmentsQuery = assignmentsQuery.Where(x => x.Match.MatchDateTime >= now);
+            }
+            else if (filter.Type == "previous")
+            {
+                assignmentsQuery = assignmentsQuery.Where(x => x.Match.MatchDateTime < now);
+            }
+
+            var orderDescending = filter.Type == "previous" && filter.Period != "today";
+
+            assignmentsQuery = orderDescending
+                ? assignmentsQuery.OrderByDescending(x => x.Match.MatchDateTime)
+                : assignmentsQuery.OrderBy(x => x.Match.MatchDateTime);
+
+            var assignments = await assignmentsQuery.ToListAsync(cancellationToken);
 
             return assignments.Select(x => new MyAssignmentResponse
             {
@@ -102,6 +172,12 @@ namespace EFA.Application.Assignments.GetMyAssignments
         private static string FormatMatchDateTimeText(DateTime matchDateTime)
         {
             return matchDateTime.ToString("dd/MM/yyyy — hh:mm tt");
+        }
+
+        private sealed class MyAssignmentsFilter
+        {
+            public string? Type { get; set; }
+            public string? Period { get; set; }
         }
     }
 }
