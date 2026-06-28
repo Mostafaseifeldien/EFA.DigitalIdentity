@@ -15,7 +15,7 @@ namespace EFA.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,AssignmentsOfficer")]
+    //[Authorize(Roles = "Admin,AssignmentsOfficer")]
     public sealed class AssignmentsController : ControllerBase
     {
         private readonly GetAssignmentsHandler _getAssignmentsHandler;

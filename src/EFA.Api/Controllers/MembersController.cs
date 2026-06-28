@@ -12,7 +12,7 @@ namespace EFA.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,MembershipOfficer")]
+    [Authorize(Roles = "Admin,Member")]
     public sealed class MembersController : ControllerBase
     {
         private readonly CreateMemberHandler _createMemberHandler;
