@@ -8,6 +8,8 @@ namespace EFA.Domain.Players
         public int ShirtNumber { get; set; }
         public string ClubName { get; set; } = string.Empty;
         public string Position { get; set; } = string.Empty;
+        public DateOnly BirthDate { get; set; }
+        public string Nationality { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

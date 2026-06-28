@@ -1,3 +1,4 @@
+using EFA.Application.Players.Common;
 using FluentValidation;
 
 namespace EFA.Application.Players.CreatePlayer
@@ -19,6 +20,26 @@ namespace EFA.Application.Players.CreatePlayer
 
             RuleFor(x => x.Position)
                 .NotEmpty().WithMessage("Position is required.")
+                .MaximumLength(100);
+
+            RuleFor(x => x.BirthDate)
+                .Must(x => x != default)
+                .WithMessage("Birth date is required.")
+                .Custom((birthDate, context) =>
+                {
+                    if (birthDate == default)
+                    {
+                        return;
+                    }
+
+                    if (!PlayerBirthDateRules.IsValid(birthDate, out var error))
+                    {
+                        context.AddFailure(nameof(CreatePlayerCommand.BirthDate), error!);
+                    }
+                });
+
+            RuleFor(x => x.Nationality)
+                .NotEmpty().WithMessage("Nationality is required.")
                 .MaximumLength(100);
         }
     }

@@ -44,6 +44,7 @@ namespace EFA.Application.Players.UpdatePlayer
             var fullName = command.FullName.Trim();
             var clubName = command.ClubName.Trim();
             var position = command.Position.Trim();
+            var nationality = command.Nationality.Trim();
 
             var duplicatePlayer = await _dbContext.Players
                 .AnyAsync(
@@ -75,6 +76,8 @@ namespace EFA.Application.Players.UpdatePlayer
             player.ShirtNumber = command.ShirtNumber;
             player.ClubName = clubName;
             player.Position = position;
+            player.BirthDate = command.BirthDate;
+            player.Nationality = nationality;
             player.UpdatedAt = DateTime.Now;
 
             await _dbContext.SaveChangesAsync(cancellationToken);

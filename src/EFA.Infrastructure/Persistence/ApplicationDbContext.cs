@@ -144,6 +144,8 @@ namespace EFA.Infrastructure.Persistence
                 entity.Property(x => x.FullName).HasMaxLength(200).IsRequired();
                 entity.Property(x => x.ClubName).HasMaxLength(150).IsRequired();
                 entity.Property(x => x.Position).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.BirthDate).IsRequired();
+                entity.Property(x => x.Nationality).HasMaxLength(100).IsRequired();
 
                 entity.HasIndex(x => x.PlayerCode).IsUnique();
                 entity.HasIndex(x => x.FullName);

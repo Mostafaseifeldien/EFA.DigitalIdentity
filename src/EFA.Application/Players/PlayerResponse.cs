@@ -10,6 +10,8 @@ namespace EFA.Application.Players
         public int ShirtNumber { get; set; }
         public string ClubName { get; set; } = string.Empty;
         public string Position { get; set; } = string.Empty;
+        public DateOnly BirthDate { get; set; }
+        public string Nationality { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
@@ -23,6 +25,8 @@ namespace EFA.Application.Players
                 ShirtNumber = player.ShirtNumber,
                 ClubName = player.ClubName,
                 Position = player.Position,
+                BirthDate = player.BirthDate,
+                Nationality = player.Nationality,
                 CreatedAt = player.CreatedAt,
                 UpdatedAt = player.UpdatedAt
             };

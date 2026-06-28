@@ -35,6 +35,7 @@ namespace EFA.Application.Players.CreatePlayer
             var fullName = command.FullName.Trim();
             var clubName = command.ClubName.Trim();
             var position = command.Position.Trim();
+            var nationality = command.Nationality.Trim();
 
             var duplicatePlayer = await _dbContext.Players
                 .AnyAsync(
@@ -69,6 +70,8 @@ namespace EFA.Application.Players.CreatePlayer
                 ShirtNumber = command.ShirtNumber,
                 ClubName = clubName,
                 Position = position,
+                BirthDate = command.BirthDate,
+                Nationality = nationality,
                 CreatedAt = DateTime.Now
             };
 
