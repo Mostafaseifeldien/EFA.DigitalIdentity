@@ -1,5 +1,6 @@
 using EFA.Application.Assignments.Common;
 using EFA.Application.Common.Interfaces;
+using EFA.Application.Matches.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace EFA.Application.Assignments.GetAssignmentById
@@ -24,6 +25,10 @@ namespace EFA.Application.Assignments.GetAssignmentById
                     .ThenInclude(x => x.HomeTeam)
                 .Include(x => x.Match)
                     .ThenInclude(x => x.AwayTeam)
+                .Include(x => x.Match)
+                    .ThenInclude(x => x.Tournament)
+                .Include(x => x.Match)
+                    .ThenInclude(x => x.Stadium)
                 .FirstOrDefaultAsync(x => x.Id == query.Id, cancellationToken);
 
             if (assignment is null)
@@ -31,7 +36,13 @@ namespace EFA.Application.Assignments.GetAssignmentById
                 return (false, null, new List<string> { "Assignment not found." }, true);
             }
 
-            return (true, AssignmentResponseMapper.MapToDetails(assignment), new List<string>(), false);
+            var response = AssignmentResponseMapper.MapToDetails(assignment);
+            response.TournamentName = assignment.Match.Tournament.Name;
+            response.RoundName = assignment.Match.Round;
+            response.StadiumName = assignment.Match.Stadium.Name;
+            response.MatchStatusName = MatchStatusMappings.GetArabicName(assignment.Match.Status);
+
+            return (true, response, new List<string>(), false);
         }
     }
 }
