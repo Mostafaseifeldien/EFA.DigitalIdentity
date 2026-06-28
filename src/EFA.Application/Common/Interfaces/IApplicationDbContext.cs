@@ -8,6 +8,7 @@ using EFA.Domain.Members;
 using EFA.Domain.Matches;
 using EFA.Domain.Assignments;
 using EFA.Domain.Notifications;
+using EFA.Domain.Players;
 using Microsoft.EntityFrameworkCore;
 
 namespace EFA.Application.Common.Interfaces
@@ -21,6 +22,7 @@ namespace EFA.Application.Common.Interfaces
         DbSet<Match> Matches { get; }
         DbSet<Assignment> Assignments { get; }
         DbSet<Notification> Notifications { get; }
+        DbSet<Player> Players { get; }
         Task<int> SaveChangesAsync(
             CancellationToken cancellationToken = default);
     }
