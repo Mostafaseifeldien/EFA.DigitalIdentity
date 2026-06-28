@@ -9,6 +9,7 @@ using EFA.Domain.Members;
 using EFA.Domain.Matches;
 using EFA.Domain.Assignments;
 using EFA.Domain.Notifications;
+using EFA.Domain.Players;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +32,7 @@ namespace EFA.Infrastructure.Persistence
         public DbSet<Match> Matches => Set<Match>();
         public DbSet<Assignment> Assignments => Set<Assignment>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<Player> Players => Set<Player>();
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -132,6 +134,20 @@ namespace EFA.Infrastructure.Persistence
                 entity.Property(x => x.UserId).HasMaxLength(450).IsRequired();
                 entity.Property(x => x.Message).HasMaxLength(1000).IsRequired();
                 entity.HasIndex(x => x.UserId);
+            });
+
+            builder.Entity<Player>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).ValueGeneratedOnAdd();
+                entity.Property(x => x.PlayerCode).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.FullName).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.ClubName).HasMaxLength(150).IsRequired();
+                entity.Property(x => x.Position).HasMaxLength(100).IsRequired();
+
+                entity.HasIndex(x => x.PlayerCode).IsUnique();
+                entity.HasIndex(x => x.FullName);
+                entity.HasIndex(x => x.ClubName);
             });
         }
     }
