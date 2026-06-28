@@ -8,6 +8,10 @@ namespace EFA.Application.Assignments
         public Guid Id { get; set; }
         public Guid MatchId { get; set; }
         public string MatchName { get; set; } = string.Empty;
+        public string TournamentName { get; set; } = string.Empty;
+        public string RoundName { get; set; } = string.Empty;
+        public string StadiumName { get; set; } = string.Empty;
+        public string MatchStatusName { get; set; } = string.Empty;
         public Guid MemberId { get; set; }
         public string MemberName { get; set; } = string.Empty;
         public AssignmentRole AssignmentRole { get; set; }
