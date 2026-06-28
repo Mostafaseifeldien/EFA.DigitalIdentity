@@ -1,8 +1,11 @@
-﻿using EFA.Api.Common;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using EFA.Api.Common;
 using EFA.Application.Members;
 using EFA.Application.Members.CreateMember;
 using EFA.Application.Members.GetMemberById;
 using EFA.Application.Members.GetMembers;
+using EFA.Application.Members.GetMyMemberProfile;
 using EFA.Application.Members.ToggleMemberStatus;
 using EFA.Application.Members.UpdateMember;
 using Microsoft.AspNetCore.Authorization;
@@ -12,12 +15,12 @@ namespace EFA.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Member")]
     public sealed class MembersController : ControllerBase
     {
         private readonly CreateMemberHandler _createMemberHandler;
         private readonly GetMembersHandler _getMembersHandler;
         private readonly GetMemberByIdHandler _getMemberByIdHandler;
+        private readonly GetMyMemberProfileHandler _getMyMemberProfileHandler;
         private readonly UpdateMemberHandler _updateMemberHandler;
         private readonly ToggleMemberStatusHandler _toggleMemberStatusHandler;
 
@@ -25,17 +28,56 @@ namespace EFA.Api.Controllers
             CreateMemberHandler createMemberHandler,
             GetMembersHandler getMembersHandler,
             GetMemberByIdHandler getMemberByIdHandler,
+            GetMyMemberProfileHandler getMyMemberProfileHandler,
             UpdateMemberHandler updateMemberHandler,
             ToggleMemberStatusHandler toggleMemberStatusHandler)
         {
             _createMemberHandler = createMemberHandler;
             _getMembersHandler = getMembersHandler;
             _getMemberByIdHandler = getMemberByIdHandler;
+            _getMyMemberProfileHandler = getMyMemberProfileHandler;
             _updateMemberHandler = updateMemberHandler;
             _toggleMemberStatusHandler = toggleMemberStatusHandler;
         }
 
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized(ApiResponse<object>.Fail(
+                    "Invalid token. User id was not found in token."));
+            }
+
+            var result = await _getMyMemberProfileHandler.HandleAsync(
+                new GetMyMemberProfileQuery { UserId = userId },
+                cancellationToken);
+
+            if (result.IsNotFound)
+            {
+                return NotFound(ApiResponse<object>.Fail(
+                    "Member not found.",
+                    result.Errors));
+            }
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Failed to retrieve member.",
+                    result.Errors));
+            }
+
+            return Ok(ApiResponse<MemberDetailsResponse>.Success(
+                result.Data!,
+                "Member retrieved successfully."));
+        }
+
         [HttpGet]
+        [Authorize(Roles = "Admin,Member")]
         public async Task<IActionResult> GetMembers(
             [FromQuery] string? search,
             [FromQuery] string? memberType,
@@ -64,6 +106,7 @@ namespace EFA.Api.Controllers
         }
 
         [HttpGet("{id:guid}")]
+        [Authorize(Roles = "Admin,Member")]
         public async Task<IActionResult> GetMemberById(
             Guid id,
             CancellationToken cancellationToken)
@@ -92,6 +135,7 @@ namespace EFA.Api.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin,Member")]
         public async Task<IActionResult> UpdateMember(
             Guid id,
             [FromBody] UpdateMemberCommand command,
@@ -119,6 +163,7 @@ namespace EFA.Api.Controllers
         }
 
         [HttpPatch("{id:guid}/toggle-status")]
+        [Authorize(Roles = "Admin,Member")]
         public async Task<IActionResult> ToggleMemberStatus(
             Guid id,
             CancellationToken cancellationToken)
@@ -147,6 +192,7 @@ namespace EFA.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Member")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateMember([FromForm] CreateMemberRequest request)
         {
