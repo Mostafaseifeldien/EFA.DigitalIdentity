@@ -90,6 +90,7 @@ namespace EFA.Application.Notifications.CreateNotification
                     Id = notification.Id,
                     Title = notification.Title,
                     Message = notification.Message,
+                    Type = notification.Type.ToString(),
                     Priority = NotificationPriorityMappings.GetName(notification.Priority),
                     IsRead = notification.IsRead,
                     CreatedAt = notification.CreatedAt
