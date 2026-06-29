@@ -11,13 +11,16 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
     {
         private readonly IApplicationDbContext _dbContext;
         private readonly IValidator<BulkCreateAssignmentsRequest> _validator;
+        private readonly INotificationPushService _notificationPushService;
 
         public BulkCreateAssignmentsHandler(
             IApplicationDbContext dbContext,
-            IValidator<BulkCreateAssignmentsRequest> validator)
+            IValidator<BulkCreateAssignmentsRequest> validator,
+            INotificationPushService notificationPushService)
         {
             _dbContext = dbContext;
             _validator = validator;
+            _notificationPushService = notificationPushService;
         }
 
         public async Task<(
@@ -137,6 +140,7 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
 
             var conflictMemberIds = conflicts.Select(x => x.MemberId).ToHashSet();
             var createdAssignments = new List<Assignment>();
+            var createdNotifications = new List<Notification>();
             var matchName = AssignmentMatchHelper.GetMatchName(match);
 
             foreach (var row in parsedRows)
@@ -163,7 +167,7 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
                 _dbContext.Assignments.Add(assignment);
                 createdAssignments.Add(assignment);
 
-                AssignmentNotificationService.CreateAssignmentNotification(
+                var notification = AssignmentNotificationService.CreateAssignmentNotification(
                     _dbContext,
                     member.UserId,
                     NotificationType.AssignmentCreated,
@@ -171,9 +175,22 @@ namespace EFA.Application.Assignments.BulkCreateAssignments
                         matchName,
                         row.RoleName,
                         match.MatchDateTime));
+
+                createdNotifications.Add(notification);
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
+
+            var pushPayloads = createdNotifications
+                .Where(x => !string.IsNullOrWhiteSpace(x.UserId))
+                .ToDictionary(
+                    x => x.UserId,
+                    AssignmentNotificationService.MapToPushPayload);
+
+            if (pushPayloads.Count > 0)
+            {
+                await _notificationPushService.PushToUsersAsync(pushPayloads, cancellationToken);
+            }
 
             var loadedAssignments = await _dbContext.Assignments
                 .AsNoTracking()
