@@ -18,10 +18,12 @@ using EFA.Application.Assignments.GetAssignments;
 using EFA.Application.Assignments.GetMyAssignments;
 using EFA.Application.Assignments.UpdateAssignment;
 using EFA.Application.Players.CreatePlayer;
+using EFA.Application.Players.DeletePlayer;
 using EFA.Application.Players.GetPlayerById;
 using EFA.Application.Players.GetPlayers;
 using EFA.Application.Players.UpdatePlayer;
 using EFA.Application.Notifications.CreateNotification;
+using EFA.Application.Notifications.GetAdminNotificationLog;
 using EFA.Application.Notifications.GetNotificationById;
 using EFA.Application.Notifications.GetNotifications;
 using EFA.Application.Notifications.GetUnreadNotificationsCount;
@@ -179,12 +181,14 @@ builder.Services.AddScoped<IValidator<CreatePlayerCommand>, CreatePlayerCommandV
 builder.Services.AddScoped<GetPlayersHandler>();
 builder.Services.AddScoped<GetPlayerByIdHandler>();
 builder.Services.AddScoped<UpdatePlayerHandler>();
+builder.Services.AddScoped<DeletePlayerHandler>();
 builder.Services.AddScoped<IValidator<UpdatePlayerCommand>, UpdatePlayerCommandValidator>();
 builder.Services.AddScoped<CreateNotificationHandler>();
 builder.Services.AddScoped<IValidator<CreateNotificationCommand>, CreateNotificationCommandValidator>();
 builder.Services.AddScoped<GetNotificationsHandler>();
 builder.Services.AddScoped<GetNotificationByIdHandler>();
 builder.Services.AddScoped<GetUnreadNotificationsCountHandler>();
+builder.Services.AddScoped<GetAdminNotificationLogHandler>();
 builder.Services.AddScoped<INotificationPushService, NotificationPushService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 

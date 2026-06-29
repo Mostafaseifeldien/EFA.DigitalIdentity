@@ -1,6 +1,7 @@
 using EFA.Api.Common;
 using EFA.Application.Players;
 using EFA.Application.Players.CreatePlayer;
+using EFA.Application.Players.DeletePlayer;
 using EFA.Application.Players.GetPlayerById;
 using EFA.Application.Players.GetPlayers;
 using EFA.Application.Players.UpdatePlayer;
@@ -18,17 +19,20 @@ namespace EFA.Api.Controllers
         private readonly GetPlayersHandler _getPlayersHandler;
         private readonly GetPlayerByIdHandler _getPlayerByIdHandler;
         private readonly UpdatePlayerHandler _updatePlayerHandler;
+        private readonly DeletePlayerHandler _deletePlayerHandler;
 
         public PlayersController(
             CreatePlayerHandler createPlayerHandler,
             GetPlayersHandler getPlayersHandler,
             GetPlayerByIdHandler getPlayerByIdHandler,
-            UpdatePlayerHandler updatePlayerHandler)
+            UpdatePlayerHandler updatePlayerHandler,
+            DeletePlayerHandler deletePlayerHandler)
         {
             _createPlayerHandler = createPlayerHandler;
             _getPlayersHandler = getPlayersHandler;
             _getPlayerByIdHandler = getPlayerByIdHandler;
             _updatePlayerHandler = updatePlayerHandler;
+            _deletePlayerHandler = deletePlayerHandler;
         }
 
         [HttpPost]
@@ -129,6 +133,34 @@ namespace EFA.Api.Controllers
             return Ok(ApiResponse<PlayerResponse>.Success(
                 result.Data!,
                 "Player updated successfully."));
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeletePlayer(
+            int id,
+            CancellationToken cancellationToken)
+        {
+            var result = await _deletePlayerHandler.HandleAsync(
+                new DeletePlayerQuery { Id = id },
+                cancellationToken);
+
+            if (result.IsNotFound)
+            {
+                return NotFound(ApiResponse<object>.Fail(
+                    "Player not found.",
+                    result.Errors));
+            }
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Failed to delete player.",
+                    result.Errors));
+            }
+
+            return Ok(ApiResponse<object>.Success(
+                new { id },
+                "Player deleted successfully."));
         }
     }
 }

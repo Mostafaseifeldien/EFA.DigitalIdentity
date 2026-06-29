@@ -3,6 +3,7 @@ using System.Security.Claims;
 using EFA.Api.Common;
 using EFA.Application.Notifications;
 using EFA.Application.Notifications.CreateNotification;
+using EFA.Application.Notifications.GetAdminNotificationLog;
 using EFA.Application.Notifications.GetNotificationById;
 using EFA.Application.Notifications.GetNotifications;
 using EFA.Application.Notifications.GetUnreadNotificationsCount;
@@ -19,17 +20,20 @@ namespace EFA.Api.Controllers
         private readonly GetNotificationsHandler _getNotificationsHandler;
         private readonly GetNotificationByIdHandler _getNotificationByIdHandler;
         private readonly GetUnreadNotificationsCountHandler _getUnreadNotificationsCountHandler;
+        private readonly GetAdminNotificationLogHandler _getAdminNotificationLogHandler;
 
         public NotificationsController(
             CreateNotificationHandler createNotificationHandler,
             GetNotificationsHandler getNotificationsHandler,
             GetNotificationByIdHandler getNotificationByIdHandler,
-            GetUnreadNotificationsCountHandler getUnreadNotificationsCountHandler)
+            GetUnreadNotificationsCountHandler getUnreadNotificationsCountHandler,
+            GetAdminNotificationLogHandler getAdminNotificationLogHandler)
         {
             _createNotificationHandler = createNotificationHandler;
             _getNotificationsHandler = getNotificationsHandler;
             _getNotificationByIdHandler = getNotificationByIdHandler;
             _getUnreadNotificationsCountHandler = getUnreadNotificationsCountHandler;
+            _getAdminNotificationLogHandler = getAdminNotificationLogHandler;
         }
 
         [HttpPost]
@@ -50,6 +54,33 @@ namespace EFA.Api.Controllers
             return Ok(ApiResponse<CreateNotificationResponse>.Success(
                 result.Data!,
                 "Notification sent successfully."));
+        }
+
+        [HttpGet("log")]
+        [Authorize(Roles = "Admin,MembershipOfficer")]
+        public async Task<IActionResult> GetAdminNotificationLog(
+            [FromQuery] string? search,
+            [FromQuery] string? targetGroup,
+            CancellationToken cancellationToken)
+        {
+            var result = await _getAdminNotificationLogHandler.HandleAsync(
+                new GetAdminNotificationLogQuery
+                {
+                    Search = search,
+                    TargetGroup = targetGroup
+                },
+                cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Failed to retrieve notification log.",
+                    result.Errors));
+            }
+
+            return Ok(ApiResponse<List<AdminNotificationLogResponse>>.Success(
+                result.Data!,
+                "Notification log retrieved successfully."));
         }
 
         [HttpGet]
