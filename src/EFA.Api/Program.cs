@@ -21,6 +21,13 @@ using EFA.Application.Players.CreatePlayer;
 using EFA.Application.Players.GetPlayerById;
 using EFA.Application.Players.GetPlayers;
 using EFA.Application.Players.UpdatePlayer;
+using EFA.Application.Notifications.CreateNotification;
+using EFA.Application.Notifications.GetNotificationById;
+using EFA.Application.Notifications.GetNotifications;
+using EFA.Application.Notifications.GetUnreadNotificationsCount;
+using EFA.Application.Common.Interfaces;
+using EFA.Api.Hubs;
+using EFA.Api.Services;
 using EFA.Domain.Identity;
 using EFA.Infrastructure;
 using EFA.Infrastructure.Persistence;
@@ -34,6 +41,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
@@ -41,7 +49,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -123,6 +132,23 @@ builder.Services
 
             ClockSkew = TimeSpan.Zero
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddScoped<CreateMemberHandler>();
 builder.Services.AddScoped<GetMembersHandler>();
@@ -154,6 +180,12 @@ builder.Services.AddScoped<GetPlayersHandler>();
 builder.Services.AddScoped<GetPlayerByIdHandler>();
 builder.Services.AddScoped<UpdatePlayerHandler>();
 builder.Services.AddScoped<IValidator<UpdatePlayerCommand>, UpdatePlayerCommandValidator>();
+builder.Services.AddScoped<CreateNotificationHandler>();
+builder.Services.AddScoped<IValidator<CreateNotificationCommand>, CreateNotificationCommandValidator>();
+builder.Services.AddScoped<GetNotificationsHandler>();
+builder.Services.AddScoped<GetNotificationByIdHandler>();
+builder.Services.AddScoped<GetUnreadNotificationsCountHandler>();
+builder.Services.AddScoped<INotificationPushService, NotificationPushService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
@@ -182,5 +214,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
