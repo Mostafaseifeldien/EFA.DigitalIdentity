@@ -4,6 +4,7 @@ namespace EFA.Domain.Notifications
     {
         AssignmentCreated = 1,
         AssignmentUpdated = 2,
-        AssignmentCancelled = 3
+        AssignmentCancelled = 3,
+        General = 4
     }
 }

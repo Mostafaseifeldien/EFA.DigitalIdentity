@@ -132,7 +132,9 @@ namespace EFA.Infrastructure.Persistence
             {
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.UserId).HasMaxLength(450).IsRequired();
+                entity.Property(x => x.Title).HasMaxLength(200).IsRequired();
                 entity.Property(x => x.Message).HasMaxLength(1000).IsRequired();
+                entity.Property(x => x.Priority).IsRequired();
                 entity.HasIndex(x => x.UserId);
             });
 
