@@ -28,5 +28,29 @@ namespace EFA.Application.Notifications.Common
             targetGroup = normalized;
             return true;
         }
+
+        public static bool TryParseFilter(string? value, out string? targetGroup, out string? error)
+        {
+            targetGroup = null;
+            error = null;
+
+            if (string.IsNullOrWhiteSpace(value) || value.Trim() == "All")
+            {
+                return true;
+            }
+
+            return TryParse(value, out targetGroup, out error);
+        }
+
+        public static string GetArabicName(string? targetGroup, int recipientsCount)
+        {
+            return targetGroup switch
+            {
+                RefereesOnly => "الحكام فقط",
+                AllMembers => "جميع الأعضاء",
+                SpecificMembers => $"أعضاء محددون ({recipientsCount})",
+                _ => "غير محدد"
+            };
+        }
     }
 }
