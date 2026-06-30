@@ -10,6 +10,7 @@ using EFA.Domain.Matches;
 using EFA.Domain.Assignments;
 using EFA.Domain.Notifications;
 using EFA.Domain.Players;
+using EFA.Domain.Security;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,6 +34,7 @@ namespace EFA.Infrastructure.Persistence
         public DbSet<Assignment> Assignments => Set<Assignment>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<Player> Players => Set<Player>();
+        public DbSet<MatchAccessLog> MatchAccessLogs => Set<MatchAccessLog>();
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -152,6 +154,33 @@ namespace EFA.Infrastructure.Persistence
                 entity.HasIndex(x => x.PlayerCode).IsUnique();
                 entity.HasIndex(x => x.FullName);
                 entity.HasIndex(x => x.ClubName);
+            });
+
+            builder.Entity<MatchAccessLog>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.MemberCode).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.ScannedByUserId).HasMaxLength(450).IsRequired();
+                entity.Property(x => x.GateName).HasMaxLength(100);
+                entity.Property(x => x.RejectionReasonCode).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.RejectionReasonName).HasMaxLength(500);
+                entity.Property(x => x.AssignmentRoleName).HasMaxLength(100);
+                entity.Property(x => x.PermissionText).HasMaxLength(300);
+                entity.Property(x => x.AuditReference).HasMaxLength(50).IsRequired();
+
+                entity.HasOne(x => x.Match)
+                    .WithMany()
+                    .HasForeignKey(x => x.MatchId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Member)
+                    .WithMany()
+                    .HasForeignKey(x => x.MemberId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => x.MatchId);
+                entity.HasIndex(x => new { x.MatchId, x.MemberId, x.IsAllowed });
+                entity.HasIndex(x => x.ScannedAt);
             });
         }
     }
