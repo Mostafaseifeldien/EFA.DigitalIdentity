@@ -58,7 +58,7 @@ namespace EFA.Application.Security.GetSecurityMatches
                 .Where(x =>
                     assignedMatchIds.Contains(x.Id) &&
                     x.Status != MatchStatus.Finished &&
-                    x.MatchDateTime.Date >= today)
+                    x.MatchDateTime.Date == today)
                 .OrderBy(x => x.MatchDateTime)
                 .ToListAsync(cancellationToken);
 
