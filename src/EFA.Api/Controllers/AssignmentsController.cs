@@ -129,7 +129,7 @@ namespace EFA.Api.Controllers
             if (!result.IsSuccess)
             {
                 return BadRequest(ApiResponse<object>.Fail(
-                    "Failed to create assignments.",
+                    result.Errors.FirstOrDefault() ?? "Failed to create assignments.",
                     result.Errors));
             }
 
