@@ -31,7 +31,17 @@ namespace EFA.Api.Controllers
         [HttpGet("matches")]
         public async Task<IActionResult> GetMatches(CancellationToken cancellationToken)
         {
-            var result = await _getSecurityMatchesHandler.HandleAsync(cancellationToken);
+            var userId = GetCurrentUserId();
+
+            if (userId is null)
+            {
+                return Unauthorized(ApiResponse<object>.Fail(
+                    "Invalid token. User id was not found in token."));
+            }
+
+            var result = await _getSecurityMatchesHandler.HandleAsync(
+                new GetSecurityMatchesQuery { UserId = userId },
+                cancellationToken);
 
             if (!result.IsSuccess)
             {
