@@ -23,6 +23,7 @@ using EFA.Application.Players.GetPlayerById;
 using EFA.Application.Players.GetPlayers;
 using EFA.Application.Players.UpdatePlayer;
 using EFA.Application.Notifications.CreateNotification;
+using EFA.Application.Dashboard.GetDashboard;
 using EFA.Application.Notifications.GetAdminNotificationLog;
 using EFA.Application.Notifications.GetNotificationById;
 using EFA.Application.Notifications.GetNotifications;
@@ -196,6 +197,7 @@ builder.Services.AddScoped<GetSecurityMatchesHandler>();
 builder.Services.AddScoped<VerifyMemberAccessHandler>();
 builder.Services.AddScoped<IValidator<VerifyMemberAccessCommand>, VerifyMemberAccessCommandValidator>();
 builder.Services.AddScoped<GetMatchAccessLogHandler>();
+builder.Services.AddScoped<GetDashboardHandler>();
 builder.Services.AddScoped<INotificationPushService, NotificationPushService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
